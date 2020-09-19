@@ -1,4 +1,6 @@
-var baseUrl = "http://localhost:5000";
+var baseUrl = "http://localhost:5055";
+
+const socket = io()
 
 
  $("#login").submit(function(e) {
@@ -14,6 +16,7 @@ var baseUrl = "http://localhost:5000";
     headers: {'Content-Type': 'application/json' }
     })
     .then(function (response) {
+      console.log(response.data)
         // //handle success
         // console.log(response);
           // alert("Success")
@@ -88,7 +91,14 @@ $("#register").submit(function(e) {
         // //handle success
         // console.log(response);
           // alert("Success")
-        alert("User Created")
+          socket.emit('userRegister',(result)=>{
+           console.log("USMAN")
+           
+            })
+          
+            
+        alert("User Created ")
+
     
     })
     .catch(function (response) {
@@ -99,8 +109,80 @@ $("#register").submit(function(e) {
 
   });
 
+
   $("#createNewUser").click(function(e) {
     e.preventDefault();
     window.location.href = "register.html";
 
   });
+
+
+  $("#showUsers").click(function(e) {  
+    axios({
+      method: 'get',
+      url: baseUrl+'/showUsers',
+      
+      headers: {'Content-Type': 'application/json'}
+      })
+      .then(function (response) {
+        var len = response.data.length;
+        for(var i=0; i<len; i++){
+        //     var id = response.data[i].id;
+      
+            var name = response.data[i].name;
+            var email = response.data[i].email;
+            var role = response.data[i].role;
+
+            var tr_str = "<tr>" +
+                "<td align='center'>" + (i+1) + "</td>" +
+              
+                "<td align='center'>" + name + "</td>" +
+                "<td align='center'>" + email + "</td>" +
+                "<td align='center'>" + role + "</td>" +
+                "</tr>";
+                $("#userTable tbody").append(tr_str);
+        }
+          // //handle success
+           console.log(response.data);
+            // alert("Success")
+           //alert(response.data)
+      
+        }).catch(function (response) {
+          //handle error
+          console.log(response);
+          alert("Somthing Worng")
+      })
+  
+    });
+
+
+  //**sockets */
+
+  const $messages = document.querySelector('#messages')
+  const messageTemplate = document.querySelector('#message-template').innerHTML
+  
+
+socket.on('message', (message) => {
+  console.log('Message obj: ',message)
+  const html = Mustache.render(messageTemplate, {
+       
+      message
+      
+  })
+  $messages.insertAdjacentHTML('beforeend', html)
+})
+
+document.querySelector('#login').addEventListener('submit', (e) => {
+    e.preventDefault()
+
+    const loginUserEmail = e.target.elements.email.value
+
+    socket.emit('sendMessage', loginUserEmail)
+})
+
+
+
+
+
+
+

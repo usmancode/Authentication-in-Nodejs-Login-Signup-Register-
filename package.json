@@ -19,6 +19,7 @@
     "jsonwebtoken": "^8.5.1",
     "microtime": "^3.0.0",
     "mongoose": "^5.10.4",
+    "socket.io": "^2.3.0",
     "swagger-jsdoc": "^4.0.0",
     "swagger-ui-express": "^4.1.4"
   },

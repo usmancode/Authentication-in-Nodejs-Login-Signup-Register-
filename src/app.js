@@ -1,15 +1,26 @@
 const express = require("express");
 const app = express();
 const path=require('path')
+const http = require('http')
+const socketio = require('socket.io')
 var bodyParser = require('body-parser')
 const mongoose = require('mongoose');
 const register = require("../controller/register.controller");
 const login = require("../controller/login.controller");
 const logout=require("../controller/logout.controller");
+const showUsers=require("../controller/showUsers.controller")
 const auth=require("../middleware/auth")
 const docs=require("../docs/index")
+const User=require("../models/user")
 
 const autocannon = require('autocannon')
+
+
+
+const server = http.createServer(app)
+const io = socketio(server)
+
+
 
 mongoose.connect('mongodb://localhost/test', {useNewUrlParser: true,useUnifiedTopology: true});
 
@@ -26,7 +37,7 @@ app.use('/web', express.static(path.join(__dirname, 'public')))
 app.post("/auth/login",login);
 app.post("/auth/register",auth,register);
 app.get("/auth/logout",auth,logout);
-
+app.get("/showUsers",showUsers)
 
 //**Mongodb Connection */
 
@@ -52,40 +63,53 @@ process.once('SIGINT', () => {
 autocannon.track(instance, {renderProgressBar: false})
 
  
-// const instance = autocannon({
-//   url: 'http://localhost:5055/auth/login',
-//   setupClient: setupClient
-// }, (err, result) => handleResults(result))
-// // results passed to the callback are the same as those emitted from the done events
-// instance.on('done', handleResults)
- 
-// instance.on('tick', () => console.log('ticking'))
- 
-// instance.on('response', handleResponse)
- 
-// function setupClient (client) {
-//   client.on('body', console.log) // console.log a response body when its received
-// }
- 
-// function handleResponse (client, statusCode, resBytes, responseTime) {
-//   console.log(`Got response with code ${statusCode} in ${responseTime} milliseconds`)
-//   console.log(`response: ${resBytes.toString()}`)
- 
-//   //update the body or headers
-//   client.setHeaders({new: 'header'})
-//   const userDetails={
-//     email:'usman@gmail.com',
-//     password:'1234'
-//   }
-//   client.setBody(userDetails.toString())
-//   client.setHeadersAndBody({new: 'header'}, 'new body')
-// }
 
-// function handleResults(result) {
-//   console.log(result)
-// }
+//**sockets */
 
-module.exports=app
+io.on('connection', (socket) => {
+  console.log('New WebSocket connection')
+
+  socket.emit('message', 'Welcome!')
+  socket.broadcast.emit('message', 'A new user has joined!')
+
+  socket.on('sendMessage', async(email) => {
+    
+    
+    const user=await User.findOne({email})
+
+      io.emit('message',user.role)
+  })
+
+  socket.on('userEmail',async(email)=>{
+   
+    const registerUser=await User.find({})
+    console.log(registerUser)
+    io.emit('message',registerUser)
+  })
+
+  socket.on('disconnect', () => {
+      io.emit('message', 'A user has left!')
+  })
+  socket.on('userRegister',async(email)=>{
+   
+    const registerUser=await User.find({})
+    console.log(registerUser)
+    io.emit('message',registerUser)
+  })
+})
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports=server
 
 
 
