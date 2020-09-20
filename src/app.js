@@ -9,16 +9,18 @@ const register = require("../controller/register.controller");
 const login = require("../controller/login.controller");
 const logout=require("../controller/logout.controller");
 const showUsers=require("../controller/showUsers.controller")
+const updateUser=require("../controller/update.controller")
 const auth=require("../middleware/auth")
 const docs=require("../docs/index")
 const User=require("../models/user")
 
 const autocannon = require('autocannon')
 
+const sock1 = require("./socket/socket1")
 
 
 const server = http.createServer(app)
-const io = socketio(server)
+global.io = socketio(server)
 
 
 
@@ -37,7 +39,8 @@ app.use('/web', express.static(path.join(__dirname, 'public')))
 app.post("/auth/login",login);
 app.post("/auth/register",auth,register);
 app.get("/auth/logout",auth,logout);
-app.get("/showUsers",showUsers)
+app.get("/showUsers",showUsers);
+app.put("/auth/updateUser",auth,updateUser);
 
 //**Mongodb Connection */
 
@@ -50,55 +53,59 @@ db.once('open', function() {
 //**AutoCannon */
 
 
-const instance = autocannon({
-  url: 'http://localhost:5055'
-})
+// const instance = autocannon({
+//   url: 'http://localhost:5055'
+// })
  
-// this is used to kill the instance on CTRL-C
-process.once('SIGINT', () => {
-  instance.stop()
-})
+// // this is used to kill the instance on CTRL-C
+// process.once('SIGINT', () => {
+//   instance.stop()
+// })
  
-// just render results
-autocannon.track(instance, {renderProgressBar: false})
+// // just render results
+// autocannon.track(instance, {renderProgressBar: false})
 
  
 
 //**sockets */
 
-io.on('connection', (socket) => {
-  console.log('New WebSocket connection')
+// io.on('connection', (socket) => {
+//   console.log('New WebSocket connection')
 
-  socket.emit('message', 'Welcome!')
-  socket.broadcast.emit('message', 'A new user has joined!')
+//   socket.emit('message', 'Welcome!')
+//   socket.broadcast.emit('message', 'A new user has joined!')
 
-  socket.on('sendMessage', async(email) => {
+//   socket.on('sendMessage', async(email) => {
     
     
-    const user=await User.findOne({email})
+//     const user=await User.findOne({email})
 
-      io.emit('message',user.role)
-  })
+//       io.emit('message',user.role)
+//   })
 
-  socket.on('userEmail',async(email)=>{
+//   socket.on('userEmail',async(email)=>{
    
-    const registerUser=await User.find({})
-    console.log(registerUser)
-    io.emit('message',registerUser)
-  })
+//     const registerUser=await User.find({})
+//     console.log(registerUser)
+//     io.emit('message',registerUser)
+//   })
 
-  socket.on('disconnect', () => {
-      io.emit('message', 'A user has left!')
-  })
-  socket.on('userRegister',async(email)=>{
+//   socket.on('disconnect', () => {
+//       io.emit('message', 'A user has left!')
+//   })
+//   socket.on('userRegister',async(email)=>{
    
-    const registerUser=await User.find({})
-    console.log(registerUser)
-    io.emit('message',registerUser)
-  })
-})
+//     const registerUser=await User.findOne({email})
+//     console.log(registerUser)
+//     io.emit('userRegister',registerUser)
+//     io.emit('message',registerUser)
+//   })
+// })
 
+io.on("connection", function(socket) {
+  sock1(io, socket);
 
+});
 
 
 

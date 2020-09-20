@@ -1,3 +1,4 @@
+
 var baseUrl = "http://localhost:5055";
 
 const socket = io()
@@ -89,17 +90,9 @@ $("#register").submit(function(e) {
     })
     .then(function (response) {
         // //handle success
-        // console.log(response);
+         console.log(response.data);
           // alert("Success")
-          socket.emit('userRegister',(result)=>{
-           console.log("USMAN")
-           
-            })
-          
-            
-        alert("User Created ")
-
-    
+          socket.emit('userRegister',(response.data.user.email))
     })
     .catch(function (response) {
         //handle error
@@ -109,10 +102,43 @@ $("#register").submit(function(e) {
 
   });
 
+  $("#update").submit(function(e) {
+    e.preventDefault();
+  
+    var bodyFormData =  $(this).serializeArray();
+    bodyFormData = getFormData(bodyFormData)
+    
+    axios({
+      method: 'put',
+      url: baseUrl+'/auth/updateUser',
+      data: bodyFormData,
+      headers: {'Content-Type': 'application/json' ,'Authorization': 'Bearer '+localStorage.getItem('token')}
+      })
+      .then(function (response) {
+          // //handle success
+         
+          console.log(response.data);
+            alert("Success")
+           
+      })
+      .catch(function (response) {
+          //handle error
+          console.log(response);
+          alert("Somthing Worng")
+      })
+  
+    });
+
+
 
   $("#createNewUser").click(function(e) {
     e.preventDefault();
     window.location.href = "register.html";
+
+  });
+  $("#updateUser").click(function(e) {
+    e.preventDefault();
+    window.location.href = "update.html";
 
   });
 
@@ -134,11 +160,11 @@ $("#register").submit(function(e) {
             var role = response.data[i].role;
 
             var tr_str = "<tr>" +
-                "<td align='center'>" + (i+1) + "</td>" +
+                "<td align='center'>" + response.data[i]._id + "</td>" +
               
-                "<td align='center'>" + name + "</td>" +
+                "<td align='center'> <span id=name_"+response.data[i]._id+">" + name + "</span></td>" +
                 "<td align='center'>" + email + "</td>" +
-                "<td align='center'>" + role + "</td>" +
+                "<td align='center'> <span id=role_"+response.data[i]._id+">" + role + "</span></td>" +
                 "</tr>";
                 $("#userTable tbody").append(tr_str);
         }
@@ -164,13 +190,53 @@ $("#register").submit(function(e) {
 
 socket.on('message', (message) => {
   console.log('Message obj: ',message)
-  const html = Mustache.render(messageTemplate, {
+  // const html = Mustache.render(messageTemplate, {
        
-      message
+  //     message
       
-  })
-  $messages.insertAdjacentHTML('beforeend', html)
+  // })
+  // $messages.insertAdjacentHTML('beforeend', html)
 })
+
+
+
+socket.on('userRegister',(result)=>{
+  alert("User Created ")
+  console.log("USMAN",result)
+
+  var tr_str = "<tr>" +
+  "<td align='center'>" + result._id + "</td>" +
+
+  "<td align='center'>" + result.name + "</td>" +
+  "<td align='center'>" + result.email + "</td>" +
+  "<td align='center'>" + result.role + "</td>" +
+  "</tr>";
+  $("#userTable tbody").append(tr_str);
+  
+   })
+
+   socket.on('userupdate',(result)=>{
+    alert("User Updated ")
+    // console.log("USMAN",result)
+  
+    // var tr_str = "<tr>" +
+    // "<td align='center'>" + result._id + "</td>" +
+  
+    // "<td align='center'>" + result.name + "</td>" +
+    // "<td align='center'>" + result.email + "</td>" +
+    // "<td align='center'>" + result.role + "</td>" +
+    // "</tr>";
+    // $("#userTable tbody").append(tr_str);
+   // console.log(result.name)
+    $("#name_"+result._id).text(result.name)
+    $("#role_"+result._id).text(result.role)
+    
+     })
+
+   socket.on('userChanged',function(user){
+    alert(JSON.stringify(user))
+   })
+
 
 document.querySelector('#login').addEventListener('submit', (e) => {
     e.preventDefault()
@@ -179,6 +245,9 @@ document.querySelector('#login').addEventListener('submit', (e) => {
 
     socket.emit('sendMessage', loginUserEmail)
 })
+
+
+
 
 
 

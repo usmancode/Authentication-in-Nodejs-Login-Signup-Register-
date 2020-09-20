@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
-const { use } = require('../docs');
 
 
 const userSchema = new mongoose.Schema({
@@ -45,9 +44,35 @@ userSchema.pre('save', async function (next) {
     if (user.isModified('password')) {
         user.password = await bcrypt.hash(user.password, 8)
     }
-
+    // if(user.isModified('role')){
+    //     io.emit('userChanged',user)
+    // }
+    
     next()
 })
+
+// userSchema.pre('update', async function (next) {
+//     const user = this
+
+   
+//         user.password = await bcrypt.hash(user.password, 8)
+    
+    
+//     next()
+// })
+
+// userSchema.pre('updateOne', async function (next) {
+//     const user = this
+
+//     if(user.isModified('role')){
+//         io.emit('userupdate',user)
+//     }
+    
+//     next()
+// })
+
+
+
 
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email })
